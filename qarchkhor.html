@@ -121,6 +121,19 @@
   }
   .score-line{ font-size:20px; color:var(--gold); margin-bottom:6px; }
 
+  .start-panel{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    background:rgba(10,5,2,.45);
+    backdrop-filter:blur(2px);
+    border-radius:18px;
+    padding:22px 30px;
+    pointer-events:all;
+  }
+  .controls-hint{
+    font-size:clamp(12px,2vw,15px);
+    color:#F3E3C3;
+  }
+
   .leaderboard-form{
     display:flex; gap:8px; align-items:center; margin:10px 0;
     pointer-events:all;
@@ -193,17 +206,13 @@
     </div>
 
     <div class="overlay" id="start-screen">
-      <h1>🍄 قارچ‌خور</h1>
-      <p>
-        یه موجود کوچولوی جنگلی هستی که عاشق قارچه! از رو تخته‌سنگ‌ها بپر، از تله‌ها و جونورای بدجنس فرار کن،
-        قارچ‌های معمولی رو بخور تا امتیاز بگیری و قارچ طلایی رو بخور تا بزرگ و قوی بشی.<br>
-        به پرچم آخر مرحله برس تا برنده بشی!
-      </p>
-      <p>
-        حرکت: <span class="key">←</span><span class="key">→</span> یا <span class="key">A</span><span class="key">D</span>
-        &nbsp;|&nbsp; پرش: <span class="key">Space</span> یا <span class="key">↑</span>
-      </p>
-      <button class="btn" id="btn-start">شروع بازی</button>
+      <div class="start-panel">
+        <button class="btn" id="btn-start">شروع بازی</button>
+        <div class="controls-hint">
+          <span class="key">←</span><span class="key">→</span> یا <span class="key">A</span><span class="key">D</span> حرکت
+          &nbsp;|&nbsp; <span class="key">Space</span> پرش
+        </div>
+      </div>
       <div class="leaderboard">
         <h3>برترین‌ها 🏆</h3>
         <ol id="leaderboard-list-start"><li class="empty">در حال بارگذاری...</li></ol>
