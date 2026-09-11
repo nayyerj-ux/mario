@@ -11,14 +11,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy game file to server
+      - name: Generate voice lines (ElevenLabs)
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          VOICE_ID: 21m00Tcm4TlvDq8ikWAM
+        run: |
+          gen() {
+            local text="$1" out="$2"
+            curl -sS -X POST "https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}" \
+              -H "xi-api-key: ${ELEVENLABS_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$(python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1], "model_id": "eleven_v3"}))' "$text")" \
+              -o "$out"
+          }
+          gen "به قارچ‌خور خوش اومدی! یه موجود کوچولوی جنگلی هستی که عاشق قارچه. آماده‌ای بریم تو ماجراجویی؟" welcome.mp3
+          gen "بزن بریم!" start.mp3
+          gen "بردی! قهرمان جنگل شدی!" win.mp3
+          gen "باختی! دوباره امتحان کن!" lose.mp3
+          file welcome.mp3 start.mp3 win.mp3 lose.mp3
+
+      - name: Copy game file and voice lines to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "qarchkhor.html"
+          source: "qarchkhor.html,welcome.mp3,start.mp3,win.mp3,lose.mp3"
           target: "/srv/www/p06/"
           strip_components: 0
 
