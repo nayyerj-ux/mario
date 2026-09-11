@@ -30,6 +30,12 @@ jobs:
           gen "باختی! دوباره امتحان کن!" lose.mp3
           file welcome.mp3 start.mp3 win.mp3 lose.mp3
 
+      - name: Inject Supabase key
+        env:
+          SUPAPASE_API_KEY: ${{ secrets.SUPAPASE_API_KEY }}
+        run: |
+          sed -i "s|__SUPABASE_KEY__|${SUPAPASE_API_KEY}|g" qarchkhor.html
+
       - name: Copy game file and voice lines to server
         uses: appleboy/scp-action@v0.1.7
         with:

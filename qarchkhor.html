@@ -74,6 +74,7 @@
     text-align:center;
     z-index:10;
     padding:20px;
+    overflow-y:auto;
   }
   .overlay.hidden{ display:none; }
   #start-screen{
@@ -119,6 +120,31 @@
     border-bottom-color:#1E4E28;
   }
   .score-line{ font-size:20px; color:var(--gold); margin-bottom:6px; }
+
+  .leaderboard-form{
+    display:flex; gap:8px; align-items:center; margin:10px 0;
+    pointer-events:all;
+  }
+  .leaderboard-form input{
+    font-family:inherit; font-weight:700; font-size:15px;
+    padding:8px 12px; border-radius:8px; border:2px solid var(--wood-dark);
+    width:160px; text-align:center;
+  }
+  .leaderboard{
+    background:linear-gradient(180deg, var(--parchment), #E4CFA0);
+    border:3px solid var(--wood-dark);
+    border-radius:10px;
+    padding:10px 18px;
+    margin:10px 0;
+    max-width:280px;
+    max-height:180px;
+    overflow-y:auto;
+    pointer-events:all;
+  }
+  .leaderboard h3{ margin:0 0 6px 0; color:var(--ink); font-size:15px; }
+  .leaderboard ol{ margin:0; padding:0 20px; text-align:right; color:var(--ink); font-size:14px; }
+  .leaderboard li{ margin:2px 0; }
+  .leaderboard .empty{ color:#7A5E3A; font-size:13px; }
 
   .key{
     display:inline-block;
@@ -178,6 +204,10 @@
         &nbsp;|&nbsp; پرش: <span class="key">Space</span> یا <span class="key">↑</span>
       </p>
       <button class="btn" id="btn-start">شروع بازی</button>
+      <div class="leaderboard">
+        <h3>برترین‌ها 🏆</h3>
+        <ol id="leaderboard-list-start"><li class="empty">در حال بارگذاری...</li></ol>
+      </div>
     </div>
 
     <div class="overlay hidden" id="gameover-screen">
@@ -196,6 +226,14 @@
       <h1>بردی! 🏆</h1>
       <p>همه‌ی قارچ‌های جنگل رو خوردی و قهرمان شدی!</p>
       <div class="score-line" id="win-score">امتیاز نهایی: 0</div>
+      <div class="leaderboard-form" id="leaderboard-form">
+        <input type="text" id="player-name-input" maxlength="20" placeholder="اسمت رو بنویس">
+        <button class="btn secondary" id="btn-submit-score">ثبت امتیاز</button>
+      </div>
+      <div class="leaderboard">
+        <h3>برترین‌ها 🏆</h3>
+        <ol id="leaderboard-list-win"><li class="empty">در حال بارگذاری...</li></ol>
+      </div>
       <button class="btn" id="btn-playagain">بازی از اول</button>
     </div>
 
@@ -276,6 +314,61 @@ function tryPlayWelcomeVoice(){
 window.addEventListener('load', tryPlayWelcomeVoice);
 document.addEventListener('pointerdown', tryPlayWelcomeVoice, {once:true});
 document.addEventListener('keydown', tryPlayWelcomeVoice, {once:true});
+
+// ---------- Leaderboard (Supabase) ----------
+const SUPABASE_URL = "https://mbgdeugfqxiqxgeqtfvu.supabase.co";
+const SUPABASE_KEY = "__SUPABASE_KEY__";
+
+async function fetchLeaderboard(){
+  try{
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/high_scores?select=name,score&order=score.desc&limit=10`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!res.ok) throw new Error('bad response');
+    return await res.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function renderLeaderboard(listEl, rows){
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  if (!rows || rows.length===0){
+    listEl.innerHTML = '<li class="empty">هنوز امتیازی ثبت نشده</li>';
+    return;
+  }
+  rows.forEach(r=>{
+    const li = document.createElement('li');
+    li.textContent = `${r.name} — ${r.score}`;
+    listEl.appendChild(li);
+  });
+}
+
+async function refreshLeaderboards(){
+  const rows = await fetchLeaderboard();
+  renderLeaderboard(document.getElementById('leaderboard-list-start'), rows);
+  renderLeaderboard(document.getElementById('leaderboard-list-win'), rows);
+}
+
+async function submitScore(name, scoreValue){
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/high_scores`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ name, score: scoreValue })
+    });
+  }catch(e){}
+  await refreshLeaderboards();
+}
+
+refreshLeaderboards();
 
 // ---------- Input ----------
 const keys = {};
@@ -1035,6 +1128,15 @@ document.getElementById('btn-next').addEventListener('click', ()=>{
 });
 document.getElementById('btn-playagain').addEventListener('click', ()=>{
   startGame();
+});
+document.getElementById('btn-submit-score').addEventListener('click', async ()=>{
+  const input = document.getElementById('player-name-input');
+  const name = (input.value || '').trim().slice(0,20) || 'ناشناس';
+  const btn = document.getElementById('btn-submit-score');
+  btn.disabled = true;
+  await submitScore(name, score);
+  btn.disabled = false;
+  input.value = '';
 });
 
 showOverlay('start-screen');
