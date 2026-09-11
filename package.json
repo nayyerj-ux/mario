@@ -1,0 +1,23 @@
+{
+  "name": "qarchkhor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "قارچ‌خور — a Persian-language 2D browser platformer (vanilla JS, no build step).",
+  "type": "module",
+  "scripts": {
+    "serve": "http-server -p 8123 -s .",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "test:unit": "node --test test/unit/",
+    "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "eslint": "^10.1.0",
+    "globals": "^15.15.0",
+    "http-server": "^14.1.1",
+    "prettier": "^3.8.1"
+  }
+}

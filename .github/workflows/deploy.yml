@@ -1,24 +1,32 @@
 name: Deploy to server
 
+# Runs only after the CI workflow has finished successfully on main, so a
+# broken build (failing lint/tests) is never shipped to production.
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout the commit CI just verified
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Generate voice lines (ElevenLabs)
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           VOICE_ID: 21m00Tcm4TlvDq8ikWAM
         run: |
+          set -euo pipefail
           gen() {
             local text="$1" out="$2"
-            curl -sS -X POST "https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}" \
+            curl -sS -f -X POST "https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}" \
               -H "xi-api-key: ${ELEVENLABS_API_KEY}" \
               -H "Content-Type: application/json" \
               -d "$(python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1], "model_id": "eleven_v3"}))' "$text")" \
@@ -30,15 +38,15 @@ jobs:
           gen "باختی! دوباره امتحان کن!" lose.mp3
           file welcome.mp3 start.mp3 win.mp3 lose.mp3
 
-      - name: Copy game file and voice lines to server
+      - name: Copy game files and voice lines to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "qarchkhor.html,welcome.mp3,start.mp3,win.mp3,lose.mp3"
-          target: "/srv/www/p06/"
+          source: 'qarchkhor.html,css/*,js/*,assets/fonts/*,welcome.mp3,start.mp3,win.mp3,lose.mp3'
+          target: '/srv/www/p06/'
           strip_components: 0
 
       - name: Publish as index.html

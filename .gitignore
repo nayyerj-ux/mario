@@ -1,3 +1,8 @@
 deploy_key*
 .env
 title_candidates/
+
+node_modules/
+test-results/
+playwright-report/
+*.mp3
