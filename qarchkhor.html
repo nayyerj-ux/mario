@@ -838,9 +838,6 @@ function drawPlayer(){
   if (flashing) return;
 
   const w = player.w, h = player.h;
-  const big = player.size==='big';
-  const bodyColor = big ? '#3E9E63' : '#4CAF7D';
-  const cheekColor = '#F79E9E';
 
   ctx.save();
   ctx.translate(x + w/2, y + h);
@@ -849,47 +846,109 @@ function drawPlayer(){
   // squash based on ground/air
   const squash = player.onGround ? 1 : 0.95;
 
-  // body
-  ctx.fillStyle = bodyColor;
+  const legH = h*0.28*squash;
+  const bodyH = h*0.34*squash;
+  const headR = w*0.52;
+  const legsTop = -(legH+6);
+  const torsoTop = -(legH+bodyH+6);
+  const headCY = torsoTop - headR*0.85;
+
+  // shoes
+  ctx.fillStyle = '#6B3A17';
+  ctx.beginPath(); ctx.ellipse(-w*0.24,-3,8,6,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(w*0.08,-3,9,6,0,0,Math.PI*2); ctx.fill();
+
+  // legs (blue overalls pants)
+  ctx.fillStyle = '#1E4FBF';
+  ctx.fillRect(-w*0.34, legsTop, w*0.28, legH);
+  ctx.fillRect(w*0.02, legsTop, w*0.32, legH);
+
+  // torso: red shirt
+  ctx.fillStyle = '#D3271E';
   ctx.beginPath();
-  ctx.ellipse(0, -h*0.55, w/2, h*0.55*squash, 0, 0, Math.PI*2);
+  ctx.moveTo(-w*0.42, legsTop);
+  ctx.lineTo(-w*0.42, torsoTop+4);
+  ctx.quadraticCurveTo(0, torsoTop-6, w*0.42, torsoTop+4);
+  ctx.lineTo(w*0.42, legsTop);
+  ctx.closePath();
   ctx.fill();
 
-  // belly
-  ctx.fillStyle = '#EFE3C3';
-  ctx.beginPath();
-  ctx.ellipse(0, -h*0.42, w*0.32, h*0.32, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // little nub feet
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath(); ctx.ellipse(-w*0.22,-2,7,6,0,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(w*0.22,-2,7,6,0,0,Math.PI*2); ctx.fill();
-
-  // eyes
+  // arms (red sleeve + white glove), back arm first
+  ctx.fillStyle = '#D3271E';
+  ctx.beginPath(); ctx.ellipse(w*0.42, torsoTop+16, 6, 10, -0.3, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.arc(w*0.14,-h*0.68,6,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(-w*0.10,-h*0.66,5,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#26301F';
-  ctx.beginPath(); ctx.arc(w*0.16,-h*0.68,2.6,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(-w*0.09,-h*0.66,2.2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(w*0.46, torsoTop+24, 6, 0, Math.PI*2); ctx.fill();
 
-  // cheeks
-  ctx.fillStyle = cheekColor;
-  ctx.beginPath(); ctx.arc(w*0.28,-h*0.5,4,0,Math.PI*2); ctx.fill();
+  // overalls chest + straps (drawn over shirt)
+  ctx.fillStyle = '#1E4FBF';
+  ctx.fillRect(-w*0.3, torsoTop+8, w*0.6, bodyH-2);
+  ctx.fillRect(-w*0.26, torsoTop-4, 6, 18);
+  ctx.fillRect(w*0.2, torsoTop-4, 6, 18);
+  ctx.fillStyle = '#F0B429';
+  ctx.beginPath(); ctx.arc(-w*0.15, torsoTop+16, 2.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(w*0.15, torsoTop+16, 2.6, 0, Math.PI*2); ctx.fill();
 
-  // smile
-  ctx.strokeStyle = '#26301F';
-  ctx.lineWidth = 2;
+  // front arm (red sleeve + white glove)
+  ctx.fillStyle = '#D3271E';
+  ctx.beginPath(); ctx.ellipse(-w*0.44, torsoTop+16, 6, 10, 0.3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-w*0.48, torsoTop+24, 6, 0, Math.PI*2); ctx.fill();
+
+  // head (skin)
+  ctx.fillStyle = '#F4C49B';
+  ctx.beginPath(); ctx.ellipse(0, headCY, headR, headR*0.95, 0, 0, Math.PI*2); ctx.fill();
+
+  // ear
+  ctx.fillStyle = '#F4C49B';
+  ctx.beginPath(); ctx.arc(-headR*0.68, headCY+headR*0.08, headR*0.22, 0, Math.PI*2); ctx.fill();
+
+  // sideburn
+  ctx.fillStyle = '#5C3A21';
+  ctx.beginPath(); ctx.ellipse(-headR*0.55, headCY+headR*0.2, headR*0.28, headR*0.42, 0, 0, Math.PI*2); ctx.fill();
+
+  // nose
+  ctx.fillStyle = '#F4C49B';
+  ctx.beginPath(); ctx.ellipse(headR*0.58, headCY+headR*0.08, headR*0.36, headR*0.28, 0, 0, Math.PI*2); ctx.fill();
+
+  // mustache
+  ctx.fillStyle = '#4A2E18';
   ctx.beginPath();
-  ctx.arc(w*0.05,-h*0.56,6,0.2,Math.PI-0.4);
+  ctx.moveTo(headR*0.05, headCY+headR*0.28);
+  ctx.quadraticCurveTo(headR*0.5, headCY+headR*0.58, headR*0.98, headCY+headR*0.3);
+  ctx.quadraticCurveTo(headR*0.5, headCY+headR*0.38, headR*0.05, headCY+headR*0.28);
+  ctx.fill();
+
+  // eye
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.ellipse(headR*0.1, headCY-headR*0.18, headR*0.22, headR*0.16, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#26301F';
+  ctx.beginPath(); ctx.arc(headR*0.18, headCY-headR*0.16, headR*0.09, 0, Math.PI*2); ctx.fill();
+
+  // eyebrow
+  ctx.strokeStyle = '#4A2E18';
+  ctx.lineWidth = Math.max(1.6, headR*0.12);
+  ctx.beginPath();
+  ctx.moveTo(-headR*0.05, headCY-headR*0.42);
+  ctx.lineTo(headR*0.45, headCY-headR*0.5);
   ctx.stroke();
 
-  // tiny leaf sprout on head (forest creature)
-  ctx.fillStyle = '#2E7D42';
+  // cap dome + brim
+  ctx.fillStyle = '#D3271E';
   ctx.beginPath();
-  ctx.ellipse(-w*0.05,-h*1.02,6,10,0.3,0,Math.PI*2);
+  ctx.ellipse(0, headCY-headR*0.45, headR*1.08, headR*0.72, 0, Math.PI, 0, true);
   ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(headR*0.55, headCY-headR*0.1, headR*0.6, headR*0.24, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // cap emblem
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-headR*0.08, headCY-headR*0.52, headR*0.3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#D3271E';
+  ctx.font = `bold ${Math.max(8,Math.round(headR*0.42))}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('M', -headR*0.08, headCY-headR*0.5);
 
   ctx.restore();
 }
