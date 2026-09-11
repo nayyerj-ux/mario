@@ -302,6 +302,49 @@ const sfx = {
   lose: ()=>{ [300,260,220,160].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'sawtooth',0.2), i*130)); }
 };
 
+// ---------- Background music (synth loop, upbeat chiptune) ----------
+const MUSIC_TEMPO = 152;
+const MUSIC_STEP = 60 / MUSIC_TEMPO / 2; // 8th notes
+const N = { C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00,
+            C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, C5:523.25 };
+const musicBass = [N.C3,N.C3,N.G3,N.G3, N.A3,N.A3,N.E3,N.E3, N.F3,N.F3,N.C3,N.C3, N.G3,N.G3,N.G3,N.G3];
+const musicLead = [
+  N.C5,0,N.E4,N.G4, N.C5,0,N.E4,0,
+  N.D4,0,N.F4,N.A4, N.D4,0,0,0,
+  N.E4,0,N.G4,N.C5, N.E4,0,N.G4,0,
+  N.G4,N.F4,N.E4,N.D4, N.C4,0,0,0
+];
+let musicTimer = null, musicStep = 0;
+function playMusicNote(freq, dur, type, vol){
+  if (!freq) return;
+  const ac = getAudioCtx();
+  if (!ac) return;
+  try{
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g); g.connect(ac.destination);
+    const now = ac.currentTime;
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.stop(now + dur + 0.02);
+  }catch(e){}
+}
+function musicTick(){
+  playMusicNote(musicBass[musicStep % musicBass.length], MUSIC_STEP*0.9, 'triangle', 0.06);
+  playMusicNote(musicLead[musicStep % musicLead.length], MUSIC_STEP*0.85, 'square', 0.05);
+  musicStep++;
+}
+function startMusic(){
+  stopMusic();
+  musicStep = 0;
+  musicTimer = setInterval(musicTick, MUSIC_STEP*1000);
+}
+function stopMusic(){
+  if (musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+}
+
 // ---------- Voice lines (ElevenLabs, generated at deploy time) ----------
 const voices = {
   welcome: new Audio('welcome.mp3'),
@@ -332,7 +375,7 @@ async function fetchLeaderboard(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/high_scores?select=name,score&order=score.desc&limit=10`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      { headers: { apikey: SUPABASE_KEY } }
     );
     if (!res.ok) throw new Error('bad response');
     return await res.json();
@@ -367,7 +410,6 @@ async function submitScore(name, scoreValue){
       method: 'POST',
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal'
       },
@@ -574,6 +616,7 @@ function startGame(){
   state = 'playing';
   document.getElementById('hud').style.display='flex';
   showOverlay(null);
+  startMusic();
 }
 
 function loadLevel(idx){
@@ -608,6 +651,7 @@ function damagePlayer(){
     lives--;
     if (lives<=0){
       state='gameover';
+      stopMusic();
       sfx.lose();
       playVoice('lose');
       document.getElementById('go-score').textContent = 'امتیاز نهایی: ' + score;
@@ -746,6 +790,7 @@ function update(){
   // flag
   if (player.x > level.flagX){
     sfx.flag();
+    stopMusic();
     document.getElementById('lc-score').textContent = 'امتیاز: ' + score;
     if (currentLevel >= LEVELS.length-1){
       document.getElementById('win-score').textContent = 'امتیاز نهایی: ' + score;
@@ -1134,6 +1179,7 @@ document.getElementById('btn-next').addEventListener('click', ()=>{
   loadLevel(currentLevel);
   state='playing';
   showOverlay(null);
+  startMusic();
 });
 document.getElementById('btn-playagain').addEventListener('click', ()=>{
   startGame();
